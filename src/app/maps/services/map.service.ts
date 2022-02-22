@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {LngLatLike, Map, Marker, Popup} from "mapbox-gl";
+import {LngLatBounds, LngLatLike, Map, Marker, Popup} from "mapbox-gl";
 import {Feature} from "../interfaces/places.interface";
 
 @Injectable({
@@ -27,7 +27,7 @@ export class MapService {
     })
   }
 
-  createMarkersFromPlaces(places: Feature[]){
+  createMarkersFromPlaces(places: Feature[], userLocation: [number, number]){
 
     if(!this.map) throw  Error('Mapa no existe')
 
@@ -39,8 +39,8 @@ export class MapService {
       const [lng, lat] = place.center
       const popup = new Popup()
         .setHTML(`
-        <h6>{{place.text}}</h6>
-        <span>{{place.place_name}}</span>
+        <h6>${place.text}</h6>
+        <span>${place.place_name}</span>
         `)
       const newMarker = new Marker()
         .setLngLat([lng, lat])
@@ -51,6 +51,17 @@ export class MapService {
     }
 
     this.markes = newMarkers;
+
+    if(places.length === 0) return;
+
+    // Limites del mapa
+    const bounds = new LngLatBounds()
+    newMarkers.forEach(  marker => bounds.extend(marker.getLngLat()))
+    bounds.extend(userLocation)
+
+    this.map.fitBounds(bounds, {
+      padding: 200
+    })
   }
 
 }

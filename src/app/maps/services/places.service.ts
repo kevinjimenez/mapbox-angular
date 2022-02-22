@@ -66,7 +66,8 @@ export class PlacesService {
         this.isLoadingPlaces = false;
         this.places = rta.features;
 
-        this._mapService.createMarkersFromPlaces(this.places)
+        this._mapService.createMarkersFromPlaces(this.places, this.userLocation!)
+
       });
   }
 
