@@ -1,6 +1,8 @@
 import {Injectable} from '@angular/core';
 import {LngLatBounds, LngLatLike, Map, Marker, Popup} from "mapbox-gl";
 import {Feature} from "../interfaces/places.interface";
+import {DirectionsApiClient} from "../api/directionsApiClient";
+import {DirectionInterface, Route} from "../interfaces/direction.interface";
 
 @Injectable({
   providedIn: 'root'
@@ -9,6 +11,13 @@ export class MapService {
 
   private map?: Map;
   private markes: Marker[] = []
+
+
+  constructor(
+    private readonly _directionsApiClient: DirectionsApiClient
+  ) {
+  }
+
 
   get isMapReady() {
     return !!this.map;
@@ -27,11 +36,11 @@ export class MapService {
     })
   }
 
-  createMarkersFromPlaces(places: Feature[], userLocation: [number, number]){
+  createMarkersFromPlaces(places: Feature[], userLocation: [number, number]) {
 
-    if(!this.map) throw  Error('Mapa no existe')
+    if (!this.map) throw  Error('Mapa no existe')
 
-    this.markes.forEach( marker => marker.remove() )
+    this.markes.forEach(marker => marker.remove())
 
     const newMarkers = []
 
@@ -52,16 +61,43 @@ export class MapService {
 
     this.markes = newMarkers;
 
-    if(places.length === 0) return;
+    if (places.length === 0) return;
 
     // Limites del mapa
     const bounds = new LngLatBounds()
-    newMarkers.forEach(  marker => bounds.extend(marker.getLngLat()))
+    newMarkers.forEach(marker => bounds.extend(marker.getLngLat()))
     bounds.extend(userLocation)
 
     this.map.fitBounds(bounds, {
       padding: 200
     })
+  }
+
+  getRouteBetweenPoints(start: [number, number], end: [number, number]){
+    this._directionsApiClient
+      .get<DirectionInterface>(`/${start.join(',')};${end.join(',')}`)
+      .subscribe( resp => {
+        this.drawPolyline(resp.routes[0])
+      } )
+  }
+
+  private drawPolyline(route: Route){
+
+    if(!this.map) throw  Error(' sin mapa')
+
+    console.log({kms: route.distance / 1000, duration: route.duration / 60})
+
+    const coords = route.geometry.coordinates;
+    const start = coords[0] as [number, number];
+
+    const bounds = new LngLatBounds()
+
+    coords.forEach(([lng, lat]) => bounds.extend([lng, lat]))
+
+    this.map.fitBounds(bounds, {
+      padding: 200
+    })
+
   }
 
 }
