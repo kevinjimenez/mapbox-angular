@@ -37,6 +37,8 @@ export class SearchResultsComponent {
 
     if(!this._placesService.userLocation) throw Error('Ho hay userLocation')
 
+    this._placesService.deletePlaces();
+
     const start = this._placesService.userLocation
     const end = place.center as [number, number];
 
